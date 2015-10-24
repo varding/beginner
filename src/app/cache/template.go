@@ -1,6 +1,8 @@
 package cache
 
 import (
+	"bytes"
+	"github.com/alecthomas/log4go"
 	"html/template"
 	"sync"
 	"time"
@@ -20,6 +22,15 @@ type TemplateCache struct {
 	lock   sync.RWMutex            //lock before visit or modify cached
 }
 
+func NewTemplate(path string) *TemplateCache {
+	t, err := template.ParseFiles(path)
+	if err != nil {
+		log4go.Error("parse template path:%s,err:%v", path, err)
+		return nil
+	}
+	return &TemplateCache{t: t, cached: make(map[string]*StringCache), path: path}
+}
+
 func (this *TemplateCache) CheckOutOfDate(t time.Time) {
 	this.lock.Lock()
 	defer this.lock.Unlock()
@@ -30,12 +41,22 @@ func (this *TemplateCache) CheckOutOfDate(t time.Time) {
 	}
 }
 
-func (this *TemplateCache) IsHit(key string) *StringCache {
+//if cache hited,no args is needed,this could save loading time(from database)
+//the hited string could also be empty,so use bool indicate hit or not
+func (this *TemplateCache) IsHit(key string) (string, bool) {
 	//the whole map was locked?
 	this.lock.RLock()
-	defer this.lock.RUnlock()
-	c, _ := this.cached[key]
-	return c
+	c, ok := this.cached[key]
+	this.lock.RUnlock()
+	if ok {
+		log4go.Debug("cache hit!,key:%s", key)
+		c.lock.Lock()
+		defer c.lock.Unlock()
+		c.hot += 1
+		c.last_visit = time.Now()
+		return c.data, true
+	}
+	return "", false
 }
 
 // is it possible that two goroutine update the same cache??how to prevent this sutation??
@@ -44,6 +65,26 @@ func (this *TemplateCache) Save(key, value string) {
 	this.lock.Lock()
 	this.cached[key] = s
 	this.lock.Unlock()
+}
+
+//if not hit then arg must be prepared for render
+func (this *TemplateCache) Render(key string, arg interface{}) string {
+	buf := bytes.NewBuffer(nil)
+	//bufio.NewWriter(w)
+	//how to convert to io.Writer?
+	//render and save the render results
+
+	if this.t == nil {
+		log4go.Error("template nil")
+		return ""
+	}
+
+	this.t.Execute(buf, arg)
+	//s := string(buf)
+	//save the result to cache
+	s := buf.String()
+	this.Save(key, s)
+	return s
 }
 
 // func new(path string) *CacheTemplate {
@@ -94,5 +135,5 @@ var template_tree map[string]*TemplateCache
 
 func init() {
 	template_tree = make(map[string]*TemplateCache)
-	template_tree["common/user_nav"] = &TemplateCache{path: "common/user_nav.html"}
+	template_tree["common/user_nav"] = NewTemplate("view/common/user_nav.html")
 }

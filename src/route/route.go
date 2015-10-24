@@ -20,6 +20,7 @@ GET "/patients/1?confirm=Are+you+sure%3F&method=delete"
 也就是要先判断query参数里是否有method参数
 */
 func http_handler(w http.ResponseWriter, r *http.Request) {
+	start := time.Now()
 	log4go.Debug("req:%s", r.URL.Path)
 	if validate_path(w, r) == false {
 		return
@@ -27,7 +28,6 @@ func http_handler(w http.ResponseWriter, r *http.Request) {
 
 	//root
 	if r.URL.Path == "/" {
-
 		return
 	}
 
@@ -39,9 +39,11 @@ func http_handler(w http.ResponseWriter, r *http.Request) {
 	case "topics":
 		handle_topic(parts, w, r)
 	case "users":
+	case "test":
+		controller.TestIndex(w, r)
 	}
-	//直接写路由
-
+	d := time.Now().Sub(start)
+	log4go.Info("handler cost:%d ms", d.Nanoseconds()/1e6)
 }
 
 func handle_topic(parts []string, w http.ResponseWriter, r *http.Request) {

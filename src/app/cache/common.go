@@ -1,20 +1,29 @@
 package cache
 
 import (
-	"app/model"
+	//"app/model"
+	//"bytes"
 	"github.com/alecthomas/log4go"
-	"time"
+	//"io"
+	//"time"
 )
 
 type UserNav struct {
 	//c    *cache.CacheTemplate
-	User *model.User //every template need it't own objs,but how to pass paramters like userId?
+	//User *model.User //every template need it't own objs,but how to pass paramters like userId?
 	//all sessions use the same cache?clone a template each for them?
 }
 
+const _user_nav_not_login = `
+<ul class="nav user-bar navbar-nav navbar-right">
+  <li><a href="/account/sign_up">注册</a></li>
+  <li><a href="/account/sign_in">登录</a></li>
+</ul>
+`
+
 //some jobs of controller was done by cache,rendering ought to be finished by controller
 func (this *UserNav) Render(args *Args) string {
-	t, ok := template_tree["common/user_nav"]
+	tpl, ok := template_tree["common/user_nav"]
 	if !ok {
 		log4go.Error("can't find template cache")
 		return ""
@@ -22,25 +31,23 @@ func (this *UserNav) Render(args *Args) string {
 
 	//nil user,return a fixed string
 	if args.User == nil {
-		return `<li><%= link_to( t("common.register"), new_user_registration_path) %></li>
-  <li><%= link_to( t("common.login"), new_user_session_path ) %></li>
-	`
+		//user == nil,so lang can't be access
+		//put Lang in cookie(session),then Lang can be selected before register or login
+		log4go.Debug("not login")
+		return _user_nav_not_login
 	}
 
-	//check if cache hits
-	if c := t.IsHit(this.key(args.User.UserName)); c != nil {
-		c.lock.RLock()
-		defer c.lock.RUnlock()
-		c.hot += 1
-		c.last_visit = time.Now()
-		return c.data
+	//check if hit
+	k := this.key(args.User.UserName)
+	if s, ok := tpl.IsHit(k); ok {
+		return s
 	}
 
-	//render and save the render results
-
-	return ""
+	//if not hit,render it
+	log4go.Debug("render")
+	return tpl.Render(k, args)
 }
 
 func (this *UserNav) key(user_name string) string {
-	return ""
+	return user_name
 }
