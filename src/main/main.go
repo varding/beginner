@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "app/conf"
 	"github.com/alecthomas/log4go"
 	"route"
 )
@@ -8,5 +9,6 @@ import (
 func main() {
 	log4go.AddFilter("stdout", log4go.FINE, log4go.NewConsoleLogWriter())
 	log4go.AddFilter("filelog", log4go.FINE, log4go.NewFileLogWriter("beginner.log", false))
+
 	route.Run()
 }

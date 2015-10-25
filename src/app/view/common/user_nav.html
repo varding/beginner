@@ -1,0 +1,35 @@
+<ul class="nav user-bar navbar-nav navbar-right">
+  <li class="dropdown">
+    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">{{.User.UserName}}<span class="caret"></span></a>
+    <button class="navbar-toggle" type="button" data-toggle="dropdown" role="button" aria-expanded="false">
+      <span class="sr-only">Toggle</span>
+      <i class="fa fa-reorder"></i>
+    </button>
+	<ul class="dropdown-menu" role="menu">
+		<li class=""><a href="/varding">{{.Local.menu.my_home_page}}</a></li>
+		<li class=""><div class='divider'></div></li>
+		<li class=""><a href="/account/edit">{{.Local.menu.edit_account_path}}</a></li>
+		<li class=""><a href="/notes">{{.Local.menu.notes}}</a></li>
+		<li class=""><a href="/varding/favorites">{{.Local.menu.likes}}</a></li>
+		<li class=""><div class='divider'></div></li>
+		<li class=""><a rel="nofollow" data-method="delete" href="/account/sign_out">{{.Local.common.logout}}</a></li>
+	</ul>
+    <%= render_list class: "dropdown-menu", role: "menu" do |li|
+      li << link_to(t("menu.my_home_page"), user_path(current_user) )
+      li << "<div class='divider'></div>"
+      li << link_to(t("menu.edit_account_path"), edit_user_registration_path)
+      li << link_to(t("menu.notes"), notes_path )
+      li << link_to(t("menu.likes"), favorites_user_path(current_user))
+      {{if .User.IsAdmin}}
+        li << "<div class='divider'></div>"
+        if params[:controller].start_with?("cpanel")
+          li << link_to("回到前台", root_path)
+        else
+          li << link_to(t("menu.cpanel"), "/cpanel")
+        end
+      {{end}}
+      li << "<div class='divider'></div>"
+      li << link_to(t("common.logout"), destroy_user_session_path, method: "delete" )
+    end %>
+  </li>
+</ul>

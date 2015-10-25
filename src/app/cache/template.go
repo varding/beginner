@@ -22,7 +22,7 @@ type TemplateCache struct {
 	lock   sync.RWMutex            //lock before visit or modify cached
 }
 
-func NewTemplate(path string) *TemplateCache {
+func new_template(path string) *TemplateCache {
 	t, err := template.ParseFiles(path)
 	if err != nil {
 		log4go.Error("parse template path:%s,err:%v", path, err)
@@ -31,19 +31,9 @@ func NewTemplate(path string) *TemplateCache {
 	return &TemplateCache{t: t, cached: make(map[string]*StringCache), path: path}
 }
 
-func (this *TemplateCache) CheckOutOfDate(t time.Time) {
-	this.lock.Lock()
-	defer this.lock.Unlock()
-	for k, v := range this.cached {
-		if v.last_visit.Before(t) {
-			delete(this.cached, k)
-		}
-	}
-}
-
 //if cache hited,no args is needed,this could save loading time(from database)
-//the hited string could also be empty,so use bool indicate hit or not
-func (this *TemplateCache) IsHit(key string) (string, bool) {
+//the hit string could also be empty,so use bool indicate hit or not
+func (this *TemplateCache) is_hit(key string) (string, bool) {
 	//the whole map was locked?
 	this.lock.RLock()
 	c, ok := this.cached[key]
@@ -60,7 +50,7 @@ func (this *TemplateCache) IsHit(key string) (string, bool) {
 }
 
 // is it possible that two goroutine update the same cache??how to prevent this sutation??
-func (this *TemplateCache) Save(key, value string) {
+func (this *TemplateCache) save(key, value string) {
 	s := &StringCache{data: value, last_visit: time.Now()}
 	this.lock.Lock()
 	this.cached[key] = s
@@ -68,10 +58,16 @@ func (this *TemplateCache) Save(key, value string) {
 }
 
 //if not hit then arg must be prepared for render
-func (this *TemplateCache) Render(key string, arg interface{}) string {
+func (this *TemplateCache) Render(key string, r ArgReader) string {
+	//check if hit
+	if s, ok := this.is_hit(key); ok {
+		return s
+	}
+
+	//if not hit,render it
+	log4go.Debug("render")
+
 	buf := bytes.NewBuffer(nil)
-	//bufio.NewWriter(w)
-	//how to convert to io.Writer?
 	//render and save the render results
 
 	if this.t == nil {
@@ -79,61 +75,29 @@ func (this *TemplateCache) Render(key string, arg interface{}) string {
 		return ""
 	}
 
+	arg := r.ReadArgs()
+
 	this.t.Execute(buf, arg)
 	//s := string(buf)
 	//save the result to cache
 	s := buf.String()
-	this.Save(key, s)
+	this.save(key, s)
 	return s
 }
 
-// func new(path string) *CacheTemplate {
-// 	return &CacheTemplate{path: path}
-// }
+func (this *TemplateCache) CheckOutOfDate(t time.Time) {
+	this.lock.Lock()
+	defer this.lock.Unlock()
+	for k, v := range this.cached {
+		if v.last_visit.Before(t) {
+			delete(this.cached, k)
+		}
+	}
+}
 
-// //path:template path
-// //key :cache key,for example content of topics/100=>content_topics_100
-// //or reply number of 10 of topics/100,reply_10_topics_100
-// func Get(path, key string) *CacheTemplate {
-// 	// if t, ok := template_tree[path]; ok {
-// 	// 	return t
-// 	// }
-// 	if c, ok := template_tree[path]; !ok {
-// 		return nil
-// 	} else {
-// 		if c.Check(key) {
-// 			c.String(key)
-// 		} else {
-
-// 		}
-// 	}
-// }
-
-// func Save(path, key string, args map[string]string) *CacheTemplate {
-
-// }
-
-// //
 var template_tree map[string]*TemplateCache
-
-// func Walk() *CacheTemplate {
-// 	//walk template directory and format tree architecture
-// }
-
-// func (this *CacheTemplate) Check(key string) bool {
-// 	//cache ok
-// 	_, ok := this.cache_render[key]
-// 	return ok
-// }
-
-// func (this *CacheTemplate) String(key string) string {
-// 	//render
-// 	if this.t != nil {
-// 		this.t.Execute(wr, data)
-// 	}
-// }
 
 func init() {
 	template_tree = make(map[string]*TemplateCache)
-	template_tree["common/user_nav"] = NewTemplate("view/common/user_nav.html")
+	template_tree["common/user_nav"] = new_template("view/common/user_nav.html")
 }

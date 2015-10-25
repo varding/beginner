@@ -1,19 +1,14 @@
 package cache
 
 import (
-	//"app/model"
-	//"bytes"
 	"github.com/alecthomas/log4go"
-	//"io"
-	//"time"
 )
 
 type UserNav struct {
-	//c    *cache.CacheTemplate
-	//User *model.User //every template need it't own objs,but how to pass paramters like userId?
-	//all sessions use the same cache?clone a template each for them?
+	args *Args
 }
 
+//put Lang in cookie(session),then Lang can be selected before register or login
 const _user_nav_not_login = `
 <ul class="nav user-bar navbar-nav navbar-right">
   <li><a href="/account/sign_up">注册</a></li>
@@ -28,24 +23,21 @@ func (this *UserNav) Render(args *Args) string {
 		log4go.Error("can't find template cache")
 		return ""
 	}
+	this.args = args //save args for ReadArgs
 
 	//nil user,return a fixed string
 	if args.User == nil {
-		//user == nil,so lang can't be access
-		//put Lang in cookie(session),then Lang can be selected before register or login
+		//lang can't be access when user == nil
 		log4go.Debug("not login")
 		return _user_nav_not_login
 	}
 
-	//check if hit
 	k := this.key(args.User.UserName)
-	if s, ok := tpl.IsHit(k); ok {
-		return s
-	}
+	return tpl.Render(k, this)
+}
 
-	//if not hit,render it
-	log4go.Debug("render")
-	return tpl.Render(k, args)
+func (this *UserNav) ReadArgs() *Args {
+	return this.args
 }
 
 func (this *UserNav) key(user_name string) string {

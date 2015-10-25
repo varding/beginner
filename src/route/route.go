@@ -43,7 +43,8 @@ func http_handler(w http.ResponseWriter, r *http.Request) {
 		controller.TestIndex(w, r)
 	}
 	d := time.Now().Sub(start)
-	log4go.Info("handler cost:%d ms", d.Nanoseconds()/1e6)
+	//log4go.Info("handler cost:%d us", d.Nanoseconds()/1e3)
+	log4go.Info("time cost:%s", d.String())
 }
 
 func handle_topic(parts []string, w http.ResponseWriter, r *http.Request) {
