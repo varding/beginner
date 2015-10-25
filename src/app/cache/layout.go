@@ -1,10 +1,9 @@
 package cache
 
 import (
-	//"cache"
 	"github.com/alecthomas/log4go"
-	tpl "html/template"
-	//"net/http"
+	"html/template"
+	"net/http"
 )
 
 //this is special,the root of template,not in the tree_cache
@@ -12,20 +11,24 @@ import (
 //tree caches the renderd output,if not,render it and save it by mux.lock
 //it only affects corresponding key,value of the cache_render
 type Application struct {
-	t       *tpl.Template //not cached template
-	Content string        //controller must fill this field to complete render
-	UserNav string        //fill by applicaion itself if render is required
+	t       *template.Template //not cached template
+	Content template.HTML      //controller must fill this field to complete render
+	UserNav template.HTML      //fill by applicaion itself if render is required
+	NavBar  template.HTML
 }
 
 func NewApp() *Application {
-	t, err := tpl.ParseFiles("view/layouts/application.html")
+	t, err := template.ParseFiles("view/layouts/application.html")
 	if err != nil {
-		log4go.Error("can't find template:%v", err)
+		log4go.Error("load template err:%v", err)
 		return nil
 	}
 	return &Application{t: t}
 }
 
-func (this *Application) Render(args *Args) {
-
+//topics controller fill all the member of application obj and call Render to write the execute result to w
+func (this *Application) Render(w http.ResponseWriter) {
+	if err := this.t.Execute(w, this); err != nil {
+		log4go.Error("app execute err:%v", err)
+	}
 }

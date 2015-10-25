@@ -6,11 +6,11 @@
       <i class="fa fa-reorder"></i>
     </button>
 	<ul class="dropdown-menu" role="menu">
-		<li class=""><a href="/varding">{{.Local.menu.my_home_page}}</a></li>
+		<li class=""><a href="/{{.User.UserName}}">{{.Local.menu.my_home_page}}</a></li>
 		<li class=""><div class='divider'></div></li>
 		<li class=""><a href="/account/edit">{{.Local.menu.edit_account_path}}</a></li>
 		<li class=""><a href="/notes">{{.Local.menu.notes}}</a></li>
-		<li class=""><a href="/varding/favorites">{{.Local.menu.likes}}</a></li>
+		<li class=""><a href="/{{.User.UserName}}/favorites">{{.Local.menu.likes}}</a></li>
 		<li class=""><div class='divider'></div></li>
 		<li class=""><a rel="nofollow" data-method="delete" href="/account/sign_out">{{.Local.common.logout}}</a></li>
 	</ul>

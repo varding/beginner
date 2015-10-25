@@ -40,10 +40,10 @@ func http_handler(w http.ResponseWriter, r *http.Request) {
 		handle_topic(parts, w, r)
 	case "users":
 	case "test":
-		controller.TestIndex(w, r)
+		//controller.TestUserNav(w, r)
+		controller.TestApp(w, r)
 	}
 	d := time.Now().Sub(start)
-	//log4go.Info("handler cost:%d us", d.Nanoseconds()/1e3)
 	log4go.Info("time cost:%s", d.String())
 }
 

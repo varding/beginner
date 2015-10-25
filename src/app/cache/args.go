@@ -16,5 +16,5 @@ type Args struct {
 //////////////////////////////
 //called before render in templateCache,callee should prepare data for render(cache miss)
 type ArgReader interface {
-	ReadArgs() *Args
+	ReadArgs(*Args)
 }
