@@ -1,4 +1,4 @@
-package cache
+package layout
 
 import (
 	"github.com/alecthomas/log4go"
@@ -10,15 +10,20 @@ import (
 //every controller owns one copy
 //tree caches the renderd output,if not,render it and save it by mux.lock
 //it only affects corresponding key,value of the cache_render
+//http://stackoverflow.com/questions/18175630/go-template-executetemplate-include-html
 type Application struct {
 	t       *template.Template //not cached template
 	Content template.HTML      //controller must fill this field to complete render
 	UserNav template.HTML      //fill by applicaion itself if render is required
 	NavBar  template.HTML
+
+	PageTitle       string
+	MetaKeywords    string
+	MetaDescription string
 }
 
 func NewApp() *Application {
-	t, err := template.ParseFiles("view/layouts/application.html")
+	t, err := template.ParseFiles("view/layout/application.html")
 	if err != nil {
 		log4go.Error("load template err:%v", err)
 		return nil

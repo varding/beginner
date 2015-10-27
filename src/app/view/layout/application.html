@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+  {{.PageTitle}}
+  <meta charset='utf-8' />
+  <meta name="keywords" content="{{.MetaKeywords}}" />
+  <meta name="description" content="{{.MetaDescription}}" />
+  <meta name="apple-mobile-web-app-capable" content="no">
+  <meta content='True' name='HandheldFriendly' />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+
+  <link rel="alternate" type="application/rss+xml" title="订阅最新帖" href="<%= feed_topics_url %>" />
+  <link rel="stylesheet" media="screen" href="https://ruby-china-files.b0.upaiyun.com/assets/front-fc9aedc9c3cb04667f469712ece27d93f90ca5eb1932a5c598c6243475e53043.css" data-turbolinks-track="true" />
+  <!--
+  <%= stylesheet_link_tag_with_cached "front" %>
+  <%= javascript_include_tag_with_cached "app" %>
+  <%= csrf_meta_tag %>
+  <%= raw SiteConfig.custom_head_html %>
+  -->
+</head>
+<body data-controller-name="<%= controller_name %>">
+  <div class="header">
+    <nav class="navbar navbar-inverse navbar-static-top navbar-default">
+      <div class="container">
+        <div class="navbar-header">
+          <a href="/" class="navbar-brand">Beginner Mind</a>
+        </div>
+		{{.NavBar}}
+		{{.UserNav}}
+        <ul class="nav navbar-nav navbar-right">
+          <li class="nav-search hidden-xs">
+            <form class="navbar-form form-search" action="/search" method="GET">
+              <div class="form-group">
+                <input class="form-control" name="q" type="text" value="" placeholder="搜索本站内容" />
+              </div>
+              <i class="fa btn-search fa-search"></i>
+              <i class="fa btn-close fa-times-circle"></i>
+            </form>
+          </li>
+		  <!--
+          <% if current_user %>
+          <%
+          badge_class = ""
+          badge_class = "new" if unread_notify_count > 0
+          %>
+          <li class="notification-count">
+            <a href="<%= notifications_path %>" class="<%= badge_class %>" title="通知">
+				<i class="fa fa-bell"></i>
+				<span class="count"><%= unread_notify_count %></span>
+			</a>
+          </li>
+          <% end %>
+		  -->
+        </ul>
+      </div>
+    </nav>
+  </div>
+
+  <div id="main" class="main-container container">
+  <!--
+    <%= birthday_tag %>
+    <%= notice_message %>
+    <%= yield %>
+  -->
+	{{.Content}}
+  </div>
+
+  <!--
+  <% if not mobile? %>
+  <footer class="footer">
+    <div class="container">
+      <%= raw SiteConfig.footer_html %>
+    </div>
+
+  </footer>
+  <% end %>
+
+  <% if mobile? %>
+    <script type="text/javascript">
+    app_mobile = true;
+    $('body').animate({ scrollTop: -1 },0);
+    </script>
+  <% end %>
+  <script type="text/javascript" data-turbolinks-eval=false>
+    App.root_url = "<%= root_url %>";
+    App.asset_url = "<%= Setting.upload_url %>";
+    App.locale = "<%= I18n.locale %>";
+    <% if current_user %>
+      App.current_user_id = <%= current_user.id %>;
+      App.access_token = "<%= current_user.temp_access_token %>";
+    <% end %>
+  </script>
+  <%= yield :scripts %>
+  <script>
+    ga('create', '<%= Setting.google_analytics_key %>', 'auto');
+    ga('require', 'displayfeatures');
+    ga('send', 'pageview');
+  </script>
+  -->
+  <div class="zoom-overlay"></div>
+</body>
+</html>

@@ -1,8 +1,11 @@
 package route
 
 import (
+	"app/conf"
 	"app/controller"
+	"app/fragment"
 	"github.com/alecthomas/log4go"
+	"github.com/astaxie/beego/session"
 	"net"
 	"net/http"
 	"path"
@@ -13,6 +16,24 @@ import (
 
 var server *http.Server
 
+func new_render_args(w http.ResponseWriter, r *http.Request) *fragment.RenderArgs {
+	//get session,if this is the first time visit ,a new session is returned
+	s, err := globalSessions.SessionStart(w, r)
+	if err != nil {
+		log4go.Error("can't get session:%v", err)
+	}
+
+	//default is zh-CN
+	lang := "zh-CN"
+	if l := s.Get("lang"); l != nil {
+		lang = l.(string)
+	} else {
+		s.Set("lang", "zh-CN") //set default lang
+	}
+
+	return fragment.NewRenderArgs(s, r, conf.Local(lang))
+}
+
 /*
 method=delete是模拟的
 http://stackoverflow.com/questions/21739122/rails-delete-method-it-doesnt-work
@@ -20,6 +41,9 @@ GET "/patients/1?confirm=Are+you+sure%3F&method=delete"
 也就是要先判断query参数里是否有method参数
 */
 func http_handler(w http.ResponseWriter, r *http.Request) {
+	args := new_render_args(w, r)
+	defer args.Release(w) //release sessionStore
+
 	start := time.Now()
 	log4go.Debug("req:%s", r.URL.Path)
 	if validate_path(w, r) == false {
@@ -37,17 +61,17 @@ func http_handler(w http.ResponseWriter, r *http.Request) {
 
 	switch parts[0] {
 	case "topics":
-		handle_topic(parts, w, r)
+		handle_topic(parts, w, r, args)
 	case "users":
 	case "test":
 		//controller.TestUserNav(w, r)
-		controller.TestApp(w, r)
+		controller.TestApp(w, r, args)
 	}
 	d := time.Now().Sub(start)
 	log4go.Info("time cost:%s", d.String())
 }
 
-func handle_topic(parts []string, w http.ResponseWriter, r *http.Request) {
+func handle_topic(parts []string, w http.ResponseWriter, r *http.Request, args *fragment.RenderArgs) {
 	parts_cnt := len(parts)
 	m := r.Method
 	log4go.Debug("handle topics,path parts:%q", parts)
@@ -55,13 +79,13 @@ func handle_topic(parts []string, w http.ResponseWriter, r *http.Request) {
 	case 1:
 		switch m {
 		case "GET":
-			controller.TopicIndex(w, r)
+			controller.TopicIndex(w, r, args)
 		case "POST":
-			controller.TopicCreate(w, r)
+			controller.TopicCreate(w, r, args)
 		}
 	case 2:
 		if parts[1] == "new" {
-			controller.TopicNew(w, r)
+			controller.TopicNew(w, r, args)
 		} else {
 			id, err := strconv.ParseUint(parts[1], 10, 64)
 			if err != nil {
@@ -71,11 +95,11 @@ func handle_topic(parts []string, w http.ResponseWriter, r *http.Request) {
 			}
 			switch m {
 			case "GET":
-				controller.TopicShow(uint32(id), w, r)
+				controller.TopicShow(uint32(id), w, r, args)
 			case "POST":
-				controller.TopicUpdate(uint32(id), w, r)
+				controller.TopicUpdate(uint32(id), w, r, args)
 			case "DELETE":
-				controller.TopicDelete(uint32(id), w, r)
+				controller.TopicDelete(uint32(id), w, r, args)
 			}
 		}
 	case 3:
@@ -86,12 +110,22 @@ func handle_topic(parts []string, w http.ResponseWriter, r *http.Request) {
 				//redirect server error
 				return
 			}
-			controller.TopicEdit(uint32(id), w, r)
+			controller.TopicEdit(uint32(id), w, r, args)
 		}
 	}
 }
 
+var globalSessions *session.Manager
+
 func Run() {
+	var err1 error
+	globalSessions, err1 = session.NewManager("file", `{"cookieName":"sid","gclifetime":3600,"ProviderConfig":"./tmp"}`)
+	if err1 != nil {
+		log4go.Error("session manager init failed")
+	}
+
+	go globalSessions.GC()
+
 	server = &http.Server{
 		Addr:         "127.0.0.1:9090",
 		Handler:      http.HandlerFunc(http_handler),

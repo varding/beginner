@@ -14,6 +14,7 @@
 		<li class=""><div class='divider'></div></li>
 		<li class=""><a rel="nofollow" data-method="delete" href="/account/sign_out">{{.Local.common.logout}}</a></li>
 	</ul>
+	<!--
     <%= render_list class: "dropdown-menu", role: "menu" do |li|
       li << link_to(t("menu.my_home_page"), user_path(current_user) )
       li << "<div class='divider'></div>"
@@ -31,5 +32,6 @@
       li << "<div class='divider'></div>"
       li << link_to(t("common.logout"), destroy_user_session_path, method: "delete" )
     end %>
+	-->
   </li>
 </ul>
